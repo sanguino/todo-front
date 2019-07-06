@@ -1,23 +1,17 @@
-<p align="center">
-  <img width="200" src="https://open-wc.org/hero.png"></img>
-</p>
-
-## Open-wc Starter App
+## todo front App
 
 [![Built with open-wc recommendations](https://img.shields.io/badge/built%20with-open--wc-blue.svg)](https://github.com/open-wc)
+
+[![Built with open-wc recommendations](https://img.shields.io/badge/built%20with-weightless-blue.svg)](https://weightless.dev/)
 
 ## Quickstart
 
 To get started:
 
 ```sh
-npm init @open-wc
+npm ci
 # requires node 10 & npm 6 or higher
 ```
-
-<p align="center">
-  <img src="./open-wc-starter-app.png"></img>
-</p>
 
 ## Scripts
 - `start` runs your app for development, reloading on file changes
