@@ -14,31 +14,58 @@ class TodoApp extends LitElement {
 
   constructor() {
     super();
-    this.taskList = [];
     this.title = 'to do app';
+    this.taskList = [];
     this.addEventListener('create-task', this.createTask);
     this.addEventListener('delete-task', this.deleteTask);
     this.addEventListener('modify-task', this.modifyTask);
   }
 
-  createTask(e) {
-    /* global uuidv4 */
-    this.taskList = [...this.taskList, { text: e.detail.text, id: uuidv4() }];
+  async connectedCallback() {
+    super.connectedCallback();
+    const res = await fetch('/api/task', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    this.taskList = await res.json();
   }
 
-  deleteTask(e) {
+  async createTask(e) {
+    /* global uuid */
+    const newTask = { text: e.detail.text, id: uuid() };
+    this.taskList = [...this.taskList, newTask];
+    await fetch('/api/task', {
+      method: 'post',
+      body: JSON.stringify(newTask),
+    });
+  }
+
+  async deleteTask(e) {
     this.taskList = this.taskList.filter(task => task.id !== e.detail.id);
+    await fetch(`/api/task/${e.detail.id}`, {
+      method: 'delete',
+      body: JSON.stringify({ id: e.detail.id }),
+    });
   }
 
-  modifyTask(e) {
-    this.taskList = this.taskList.map(task => {
+  async modifyTask(e) {
+    let idFound;
+    this.taskList = this.taskList.map(async task => {
       if (task.id === e.detail.id) {
+        idFound = e.detail.id;
         return {
           ...task,
           completed: e.detail.completed,
         };
       }
       return task;
+    });
+    await fetch(`/api/task/${idFound}`, {
+      method: 'put',
+      body: JSON.stringify({ id: e.detail.id, completed: e.detail.completed }),
     });
   }
 
