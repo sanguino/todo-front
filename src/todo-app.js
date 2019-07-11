@@ -1,14 +1,19 @@
-import { css, html, LitElement } from 'lit-element';
+import {css, html, LitElement} from 'lit-element';
 
 import './todo-header';
 import './todo-item';
 import './todo-create';
 
+const headers = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
+};
+
 class TodoApp extends LitElement {
   static get properties() {
     return {
-      title: { type: String },
-      taskList: { type: Array },
+      title: {type: String},
+      taskList: {type: Array},
     };
   }
 
@@ -25,20 +30,18 @@ class TodoApp extends LitElement {
     super.connectedCallback();
     const res = await fetch('/api/task', {
       method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
     this.taskList = await res.json();
   }
 
   async createTask(e) {
     /* global uuid */
-    const newTask = { text: e.detail.text, id: uuid() };
+    const newTask = {text: e.detail.text, id: uuid()};
     this.taskList = [...this.taskList, newTask];
     await fetch('/api/task', {
-      method: 'post',
+      method: 'POST',
+      headers,
       body: JSON.stringify(newTask),
     });
   }
@@ -46,14 +49,15 @@ class TodoApp extends LitElement {
   async deleteTask(e) {
     this.taskList = this.taskList.filter(task => task.id !== e.detail.id);
     await fetch(`/api/task/${e.detail.id}`, {
-      method: 'delete',
-      body: JSON.stringify({ id: e.detail.id }),
+      method: 'DELETE',
+      headers,
+      body: JSON.stringify({id: e.detail.id}),
     });
   }
 
   async modifyTask(e) {
     let idFound;
-    this.taskList = this.taskList.map(async task => {
+    this.taskList = this.taskList.map( task => {
       if (task.id === e.detail.id) {
         idFound = e.detail.id;
         return {
@@ -64,8 +68,9 @@ class TodoApp extends LitElement {
       return task;
     });
     await fetch(`/api/task/${idFound}`, {
-      method: 'put',
-      body: JSON.stringify({ id: e.detail.id, completed: e.detail.completed }),
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({id: e.detail.id, completed: e.detail.completed}),
     });
   }
 
@@ -74,14 +79,14 @@ class TodoApp extends LitElement {
       <todo-header></todo-header>
 
       ${this.taskList.map(
-        element => html`
+      element => html`
           <todo-item
             id="${element.id}"
             text="${element.text}"
             ?completed=${element.completed}
           ></todo-item>
         `,
-      )}
+    )}
 
       <todo-create></todo-create>
     `;
