@@ -1,5 +1,8 @@
 import { css, html, LitElement } from 'lit-element';
 
+import 'weightless/icon';
+import 'weightless/snackbar';
+
 import './todo-header';
 import './todo-item';
 import './todo-create';
@@ -14,6 +17,7 @@ class TodoApp extends LitElement {
     return {
       title: { type: String },
       taskList: { type: Array },
+      error: { type: Boolean },
     };
   }
 
@@ -26,38 +30,59 @@ class TodoApp extends LitElement {
     this.addEventListener('modify-task', this.modifyTask);
   }
 
+  showError() {
+    this.error = true;
+    setTimeout(() => {
+      this.error = false;
+    }, 2000);
+  }
+
   async connectedCallback() {
     super.connectedCallback();
-    const res = await fetch('/api/task', {
+    const response = await fetch('/api/task', {
       method: 'GET',
       headers,
     });
-    this.taskList = await res.json();
+    if (!response.ok) {
+      this.showError();
+    } else {
+      this.taskList = await response.json();
+    }
   }
 
   async createTask(e) {
     /* global uuid */
     const newTask = { text: e.detail.text, id: uuid() };
-    this.taskList = [...this.taskList, newTask];
-    await fetch('/api/task', {
+    const response = await fetch('/api/task', {
       method: 'POST',
       headers,
       body: JSON.stringify(newTask),
     });
+
+    if (!response.ok) {
+      this.showError();
+    } else {
+      this.taskList = [...this.taskList, newTask];
+    }
   }
 
   async deleteTask(e) {
-    this.taskList = this.taskList.filter(task => task.id !== e.detail.id);
-    await fetch(`/api/task/${e.detail.id}`, {
+    const response = await fetch(`/api/task/${e.detail.id}`, {
       method: 'DELETE',
       headers,
       body: JSON.stringify({ id: e.detail.id }),
     });
+
+    if (!response.ok) {
+      this.showError();
+    } else {
+      this.taskList = this.taskList.filter(task => task.id !== e.detail.id);
+    }
   }
 
   async modifyTask(e) {
     let idFound;
-    this.taskList = this.taskList.map(task => {
+    const newList = this.taskList.map(task => {
       if (task.id === e.detail.id) {
         idFound = e.detail.id;
         return {
@@ -67,11 +92,17 @@ class TodoApp extends LitElement {
       }
       return task;
     });
-    await fetch(`/api/task/${idFound}`, {
+    const response = await fetch(`/api/task/${idFound}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({ id: e.detail.id, completed: e.detail.completed }),
     });
+
+    if (!response.ok) {
+      this.showError();
+    } else {
+      this.taskList = newList;
+    }
   }
 
   render() {
@@ -89,6 +120,15 @@ class TodoApp extends LitElement {
       )}
 
       <todo-create></todo-create>
+
+      ${!this.error
+        ? html``
+        : html`
+            <wl-snackbar open>
+              <wl-icon slot="icon">error_outline</wl-icon>
+              <span>Error connecting DB</span>
+            </wl-snackbar>
+          `}
     `;
   }
 
@@ -104,6 +144,12 @@ class TodoApp extends LitElement {
         todo-create {
           display: block;
           margin-top: 20px;
+        }
+
+        wl-snackbar {
+          position: absolute;
+          bottom: 20px;
+          width: 70%;
         }
       `,
     ];
