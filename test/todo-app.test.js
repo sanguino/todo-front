@@ -3,11 +3,11 @@ import sinon from 'sinon';
 import '../src/todo-app';
 
 describe('<todo-app>', () => {
-  before(() => {
-    sinon.stub(window, 'fetch').returns([]);
+  beforeEach(() => {
+    sinon.stub(window, 'fetch').resolves({ ok: true });
   });
 
-  after(() => {
+  afterEach(() => {
     window.fetch.restore();
   });
   describe('Properties', () => {
@@ -54,9 +54,23 @@ describe('<todo-app>', () => {
           <todo-app .taskList=${fakeList}></todo-app>
         `,
       );
-      el.createTask(event);
+      await el.createTask(event);
       expect(el.taskList.length).to.equal(2);
       expect(el.taskList[1].text).to.equal('buy beer');
+    });
+
+    it('not add a task when fectch fails', async () => {
+      const fakeList = [{ id: 12, text: 'buy milk' }];
+      const event = { detail: { text: 'buy beer' } };
+      window.fetch.restore();
+      sinon.stub(window, 'fetch').returns({ ok: false });
+      const el = await fixture(
+        html`
+          <todo-app .taskList=${fakeList}></todo-app>
+        `,
+      );
+      await el.createTask(event);
+      expect(el.taskList.length).to.equal(1);
     });
   });
 
@@ -69,8 +83,22 @@ describe('<todo-app>', () => {
           <todo-app .taskList=${fakeList}></todo-app>
         `,
       );
-      el.deleteTask(event);
+      await el.deleteTask(event);
       expect(el.taskList.length).to.equal(0);
+    });
+
+    it('not removes a task when deleteTask Method is executed', async () => {
+      const fakeList = [{ id: 12, text: 'buy milk' }];
+      const event = { detail: { id: 12 } };
+      window.fetch.restore();
+      sinon.stub(window, 'fetch').returns({ ok: false });
+      const el = await fixture(
+        html`
+          <todo-app .taskList=${fakeList}></todo-app>
+        `,
+      );
+      await el.deleteTask(event);
+      expect(el.taskList.length).to.equal(1);
     });
   });
 
@@ -83,9 +111,21 @@ describe('<todo-app>', () => {
           <todo-app .taskList=${fakeList}></todo-app>
         `,
       );
-      el.modifyTask(event);
+      await el.modifyTask(event);
       expect(el.taskList.length).to.equal(1);
       // expect(el.taskList[0].completed).to.be.true; //TODO: fix this test
+    });
+  });
+
+  describe('showError', () => {
+    it('set this.error to true', async () => {
+      const el = await fixture(
+        html`
+          <todo-app></todo-app>
+        `,
+      );
+      await el.showError();
+      expect(el.error).to.be.true;
     });
   });
 });
