@@ -14,7 +14,20 @@ module.exports = config => {
         { pattern: config.grep ? config.grep : 'test/**/*.test.js', type: 'module' },
       ],
 
-      // you can overwrite/extend the config further
+      coverageIstanbulReporter: {
+        reports: ['html', 'lcovonly', 'text-summary'],
+        dir: 'coverage',
+        combineBrowserReports: true,
+        skipFilesWithNoCoverage: false,
+        thresholds: {
+          global: {
+            statements: 60,
+            branches: 60,
+            functions: 60,
+            lines: 60,
+          },
+        },
+      },
     }),
   );
   return config;

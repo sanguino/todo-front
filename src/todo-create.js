@@ -5,12 +5,14 @@ import 'weightless/textfield';
 class TodoCreate extends LitElement {
   createTask() {
     const tf = this.shadowRoot.querySelector('wl-textfield');
-    this.dispatchEvent(
-      new CustomEvent('create-task', {
-        detail: { text: tf.value },
-        composed: true,
-      }),
-    );
+    if (tf.value) {
+      this.dispatchEvent(
+        new CustomEvent('create-task', {
+          detail: { text: tf.value },
+          composed: true,
+        }),
+      );
+    }
     tf.value = '';
   }
 
