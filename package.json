@@ -15,7 +15,7 @@
     "test:bs": "karma start karma.bs.config.js --legacy --coverage",
     "start:build": "owc-dev-server dist/ --open",
     "build": "rimraf dist && rollup -c rollup.config.js",
-    "mocks": "json-server --watch mocks/api.json",
+    "mocks": "node mocks/mocks.js",
     "serve": "owc-dev-server --app-index index.html --open --watch",
     "start": "concurrently 'npm run mocks' 'npm run serve'"
   },
