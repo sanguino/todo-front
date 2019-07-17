@@ -39,7 +39,7 @@ class TodoApp extends LitElement {
     return {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authenticate: `Bearer ${this.token}`,
+      Authorization: `Bearer ${this.token}`,
     };
   }
 
