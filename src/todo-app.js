@@ -7,17 +7,13 @@ import './todo-header';
 import './todo-item';
 import './todo-create';
 
-const headers = {
-  Accept: 'application/json',
-  'Content-Type': 'application/json',
-};
-
 class TodoApp extends LitElement {
   static get properties() {
     return {
       title: { type: String },
       taskList: { type: Array },
       error: { type: Boolean },
+      token: { type: String },
     };
   }
 
@@ -25,6 +21,8 @@ class TodoApp extends LitElement {
     super();
     this.title = 'to do app';
     this.taskList = [];
+    this.addEventListener('login', this.login);
+    this.addEventListener('logout', this.logout);
     this.addEventListener('create-task', this.createTask);
     this.addEventListener('delete-task', this.deleteTask);
     this.addEventListener('modify-task', this.modifyTask);
@@ -37,11 +35,19 @@ class TodoApp extends LitElement {
     }, 2000);
   }
 
-  async connectedCallback() {
+  get headers() {
+    return {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authenticate: `Bearer ${this.token}`,
+    };
+  }
+
+  async getList() {
     super.connectedCallback();
     const response = await fetch('/api/task', {
       method: 'GET',
-      headers,
+      headers: this.headers,
     });
     if (!response.ok) {
       this.showError();
@@ -50,12 +56,32 @@ class TodoApp extends LitElement {
     }
   }
 
+  async login(e) {
+    const response = await fetch('/auth', {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(e.detail),
+    });
+
+    if (!response.ok) {
+      this.showError();
+    } else {
+      this.token = (await response.json()).token;
+      this.getList();
+    }
+  }
+
+  logout() {
+    this.token = undefined;
+    this.taskList = [];
+  }
+
   async createTask(e) {
     /* global uuid */
     const newTask = { text: e.detail.text, id: uuid() };
     const response = await fetch('/api/task', {
       method: 'POST',
-      headers,
+      headers: this.headers,
       body: JSON.stringify(newTask),
     });
 
@@ -69,7 +95,7 @@ class TodoApp extends LitElement {
   async deleteTask(e) {
     const response = await fetch(`/api/task/${e.detail.id}`, {
       method: 'DELETE',
-      headers,
+      headers: this.headers,
       body: JSON.stringify({ id: e.detail.id }),
     });
 
@@ -94,7 +120,7 @@ class TodoApp extends LitElement {
     });
     const response = await fetch(`/api/task/${idFound}`, {
       method: 'PUT',
-      headers,
+      headers: this.headers,
       body: JSON.stringify({ id: e.detail.id, completed: e.detail.completed }),
     });
 
@@ -107,20 +133,24 @@ class TodoApp extends LitElement {
 
   render() {
     return html`
-      <todo-header></todo-header>
+      <todo-header token="${this.token ? this.token : ''}"></todo-header>
 
-      ${this.taskList.map(
-        element => html`
-          <todo-item
-            id="${element.id}"
-            text="${element.text}"
-            ?completed=${element.completed}
-          ></todo-item>
-        `,
-      )}
-
-      <todo-create></todo-create>
-
+      ${this.token
+        ? this.taskList.map(
+            element => html`
+              <todo-item
+                id="${element.id}"
+                text="${element.text}"
+                ?completed=${element.completed}
+              ></todo-item>
+            `,
+          )
+        : html``}
+      ${this.token
+        ? html`
+            <todo-create></todo-create>
+          `
+        : html``}
       ${!this.error
         ? html``
         : html`
